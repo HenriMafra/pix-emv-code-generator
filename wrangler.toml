@@ -1,0 +1,10 @@
+name = "pixforge"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+# ── Cloudflare D1 (database) ──────────────────────────────────────────────────
+# Create it with `npm run db:create`, then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "pixforge-db"
+database_id = "15ef1fd3-66ef-4914-ab55-a24d733bae6a"

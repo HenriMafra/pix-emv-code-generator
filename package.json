@@ -1,0 +1,42 @@
+{
+  "name": "pixforge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PixForge — gere e valide cobranças PIX (BR Code estático + QR) 100% no navegador.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "lint": "tsc -p tsconfig.json && tsc -p functions/tsconfig.json",
+    "check:functions": "tsc -p functions/tsconfig.json",
+    "test": "vitest run",
+    "pages:dev": "wrangler pages dev ./dist --d1 DB=pixforge-db --compatibility-date=2024-09-23",
+    "deploy": "npm run build && wrangler pages deploy ./dist --project-name pixforge",
+    "db:create": "wrangler d1 create pixforge-db",
+    "db:schema": "wrangler d1 execute pixforge-db --file=./schema.sql --remote",
+    "db:schema:local": "wrangler d1 execute pixforge-db --file=./schema.sql --local"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.3.19",
+    "lucide-react": "^0.439.0",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3",
+    "vitest": "^2.0.5"
+  }
+}
