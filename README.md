@@ -1,65 +1,85 @@
-# ⚡ Pix EMV Code Generator — Gerador e Parser de BR Code Pix com CRC16-CCITT
+# Pix EMV Code Generator: Native Bitwise CRC16-CCITT and EMVCo TLV Serialization
 
-Gerador e validador de cobranças do arranjo de pagamentos brasileiro **Pix (Banco Central do Brasil)**, implementando a codificação e decodificação do padrão **EMVCo TLV (Type-Length-Value)** e o algoritmo de verificação de integridade **CRC16-CCITT (0xFFFF)** executado inteiramente no navegador sem dependência de APIs externas.
-
----
-
-## 📌 Que Problema Resolve?
-
-Para criar um código "Pix Copia e Cola" ou renderizar um QR Code estático/dinâmico de pagamento, muitos desenvolvedores recorrem a APIs pagas de gateways terceiros ou bibliotecas com dependências pesadas. 
-
-O **Pix EMV Code Generator** demonstra como a especificação oficial do Banco Central do Brasil pode ser implementada de ponta a ponta em TypeScript puro:
-1. Montagem do payload EMVCo estruturado em blocos TLV.
-2. Formatação das chaves (CPF/CNPJ, Telefone, E-mail, Chave Aleatória EVP) e valores com ponto flutuante seguro.
-3. Cálculo do checksum CRC16-CCITT de 16 bits para garantir que qualquer caractere alterado invalide a leitura bancária.
-4. Geração instantânea de QR Code vetorial e texto Copia e Cola.
+**Author:** Henri Mafra  
+**License:** MIT License  
+**Domain:** Financial Cryptography, Bitwise Algorithms, Mobile Payment Standards  
 
 ---
 
-## ⚙️ Diferencial Técnico: Estrutura EMVCo & CRC16
+## 1. Overview
 
-### 1. Padrão TLV (Tag-Length-Value)
-Cada campo do payload Pix é estruturado no formato:
-`[Tag: 2 dígitos][Length: 2 dígitos][Value: N caracteres]`
-
-Exemplo de montagem:
-- **Payload Format Indicator (Tag 00):** `000201` (Tag 00, Tam 02, Valor 01)
-- **Merchant Account Information (Tag 26):** Sub-tags para domínio do BACEN (`br.gov.bcb.pix`) e chave Pix.
-- **Transaction Currency (Tag 53):** `5303986` (Código ISO 4217 para Real brasileiro: 986).
-- **CRC16 (Tag 63):** `6304` seguido pelos 4 caracteres hexadecimais do checksum.
-
-### 2. Algoritmo CRC16-CCITT (Polinômio 0x1021)
-O cálculo do checksum final utiliza deslocamento de bits (bitwise operations):
-- Polinômio padrão: `0x1021` ($x^{16} + x^{12} + x^5 + 1$).
-- Valor inicial: `0xFFFF`.
-- Cada byte da string (incluindo o prefixo `6304`) passa pela operação XOR com a tabela pré-calculada ou deslocamento bit a bit, gerando o hash hexadecimal final de 4 dígitos.
+Pix EMV Code Generator is a client-side serialization and verification engine for Brazilian Instant Payments (Pix - Central Bank of Brazil). It implements strict **EMVCo Tag-Length-Value (TLV)** encoding and bitwise **CRC16-CCITT** integrity checksum calculation natively in the browser, eliminating reliance on third-party payment gateway APIs.
 
 ---
 
-## 🏗️ Stack Tecnológica
+## 2. EMVCo Specification and Data Representation
 
-- **Core:** TypeScript puro sem dependências externas para parsing e CRC16.
-- **Frontend:** React 18, Tailwind CSS, Lucide Icons.
-- **Deploy:** Cloudflare Pages (Serverless Edge).
+The payload conforms to the EMVCo Merchant-Presented QR Code Standard. Every field is serialized as an atomic TLV block:
+
+$$\text{Block} = [\text{Tag}]_{2\text{ chars}} \parallel [\text{Length}]_{2\text{ chars}} \parallel [\text{Value}]_{L\text{ chars}}$$
+
+### Essential Payload Schema:
+- **Tag 00 (Payload Format Indicator):** Constant value `01` (`000201`).
+- **Tag 26 (Merchant Account Information):** Nested TLV specifying reverse domain `br.gov.bcb.pix` (Tag 00) and the recipient key (Tag 01).
+- **Tag 52 (Merchant Category Code):** Constant `0000` (`52040000`).
+- **Tag 53 (Transaction Currency):** ISO 4217 numeric code `986` for BRL (`5303986`).
+- **Tag 54 (Transaction Amount):** Fixed-point decimal string representation.
+- **Tag 58 (Country Code):** ISO 3166-1 alpha-2 code `BR` (`5802BR`).
+- **Tag 63 (CRC16 Checksum):** Tag `63`, length `04`, followed by 4 hexadecimal characters.
 
 ---
 
-## 🚀 Como Executar Localmente
+## 3. Mathematical Formulation of CRC16-CCITT
+
+The integrity verification uses the CCITT cyclic redundancy check polynomial:
+
+$$G(x) = x^{16} + x^{12} + x^5 + 1 \quad (\text{Hexadecimal: } 0x1021)$$
+
+### Algorithm Specifications:
+- **Initial Value:** `0xFFFF`
+- **Input Reflection:** None
+- **Output Reflection:** None
+- **Final XOR:** `0x0000`
+
+For each input byte $B_k$, the 16-bit register $R$ updates via bitwise operations:
+
+$$R \leftarrow (R \ll 8) \oplus \text{Table}\left[(R \gg 8) \oplus B_k\right]$$
+
+The resulting 16-bit unsigned integer is converted into a 4-character uppercase hexadecimal string, appended directly to the `6304` descriptor.
+
+---
+
+## 4. Architecture and Verification
+
+- **Encoding Engine:** Zero-dependency TypeScript module operating with bit-level operations.
+- **Rendering Pipeline:** Vector SVG QR Code generation with error correction level M (15% redundancy).
+- **Validation Suite:** Automated unit tests cross-verifying generated strings against BACEN reference test vectors.
+
+---
+
+## 5. Setup and Execution
 
 ```bash
-# 1. Clone o repositório
+# 1. Clone repository
 git clone https://github.com/HenriMafra/pix-emv-code-generator.git
 cd pix-emv-code-generator
 
-# 2. Instale as dependências
+# 2. Install dependencies
 npm install
 
-# 3. Inicie o servidor de desenvolvimento
+# 3. Start local development environment
 npm run dev
 ```
 
 ---
 
-## 📄 Licença
+## 6. References
 
-Distribuído sob a licença **MIT**. Desenvolvido por **Henri Mafra**.
+- EMVCo. (2017). *EMV Integrated Circuit Card Specifications for Payment Systems: QR Code Specification for Payment Systems (CPM/MPM)*.
+- Central Bank of Brazil (BACEN). (2020). *Manual de Padrões para Iniciação do Pix*.
+
+---
+
+## 7. License
+
+Licensed under the MIT License. Copyright (c) Henri Mafra.
